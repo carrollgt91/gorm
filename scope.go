@@ -1105,12 +1105,24 @@ func (scope *Scope) autoForeignKeys() {
 			if relationship.Kind == "belongs_to" {
 				newScope := scope.New(reflect.New(field.Struct.Type).Interface())
 				fKeyTable := newScope.TableName()
+
+				if !newScope.Dialect().HasTable(fKeyTable) {
+					fmt.Printf("automigrate belongs_to \n")
+					newScope.autoMigrate()
+				}
+
 				dest := fKeyTable + "(" + relationship.AssociationForeignDBNames[0] + ")"
 				scope.addForeignKey(relationship.ForeignDBNames[0], dest, "RESTRICT", "RESTRICT")
 			}
 
 			if relationship.Kind == "has_one" {
 				newScope := scope.New(reflect.New(field.Struct.Type).Interface())
+
+				if !newScope.Dialect().HasTable(newScope.TableName()) {
+					fmt.Printf("automigrate has_one \n")
+					newScope.autoMigrate()
+				}
+
 				fKeyTable := scope.TableName()
 				dest := fKeyTable + "(" + relationship.AssociationForeignDBNames[0] + ")"
 				newScope.addForeignKey(relationship.ForeignDBNames[0], dest, "RESTRICT", "RESTRICT")
@@ -1120,6 +1132,12 @@ func (scope *Scope) autoForeignKeys() {
 				model := reflect.New(field.Struct.Type.Elem()).Interface()
 				newScope := scope.New(model)
 				fKeyTable := scope.TableName()
+
+				if !newScope.Dialect().HasTable(newScope.TableName()) {
+					fmt.Printf("automigrate has_many \n")
+					newScope.autoMigrate()
+				}
+
 				dest := fKeyTable + "(" + relationship.AssociationForeignDBNames[0] + ")"
 				newScope.addForeignKey(relationship.ForeignDBNames[0], dest, "RESTRICT", "RESTRICT")
 			}
