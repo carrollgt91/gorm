@@ -1098,6 +1098,21 @@ func (scope *Scope) createJoinTable(field *StructField) {
 	}
 }
 
+func (scope *Scope) autoForeignKeys() {
+	for _, field := range scope.GetModelStruct().StructFields {
+		if relationship := field.Relationship; relationship != nil {
+			fmt.Printf("relationship: %+v, field %+v, tag %v \n", field.Relationship, field, field.Tag)
+			if relationship.Kind == "belongs_to" {
+				// TODO ensure that 0 indexes here are good; determine strategy for setting RESTRICT or other foreign key settings here (based on tag, maybe?)
+				newScope := scope.New(reflect.New(field.Struct.Type).Interface())
+				fKeyTable := newScope.TableName()
+				dest := fKeyTable + "(" + relationship.AssociationForeignDBNames[0] + ")"
+				scope.addForeignKey(relationship.ForeignDBNames[0], dest, "RESTRICT", "RESTRICT")
+			}
+		}
+	}
+}
+
 func (scope *Scope) createTable() *Scope {
 	var tags []string
 	var primaryKeys []string
@@ -1128,6 +1143,7 @@ func (scope *Scope) createTable() *Scope {
 	}
 
 	scope.Raw(fmt.Sprintf("CREATE TABLE %v (%v %v) %s", scope.QuotedTableName(), strings.Join(tags, ","), primaryKeyStr, scope.getTableOptions())).Exec()
+	scope.autoForeignKeys()
 
 	scope.autoIndex()
 	return scope
