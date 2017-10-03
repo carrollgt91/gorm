@@ -1101,13 +1101,11 @@ func (scope *Scope) createJoinTable(field *StructField) {
 func (scope *Scope) autoForeignKeys() {
 	for _, field := range scope.GetModelStruct().StructFields {
 		if relationship := field.Relationship; relationship != nil {
-			fmt.Printf("relationship: %+v, field %+v, tag %v \n", field.Relationship, field, field.Tag)
 			if relationship.Kind == "belongs_to" {
 				newScope := scope.New(reflect.New(field.Struct.Type).Interface())
 				fKeyTable := newScope.TableName()
 
 				if !newScope.Dialect().HasTable(fKeyTable) {
-					fmt.Printf("automigrate belongs_to \n")
 					newScope.autoMigrate()
 				}
 
@@ -1119,7 +1117,6 @@ func (scope *Scope) autoForeignKeys() {
 				newScope := scope.New(reflect.New(field.Struct.Type).Interface())
 
 				if !newScope.Dialect().HasTable(newScope.TableName()) {
-					fmt.Printf("automigrate has_one \n")
 					newScope.autoMigrate()
 				}
 
@@ -1134,7 +1131,6 @@ func (scope *Scope) autoForeignKeys() {
 				fKeyTable := scope.TableName()
 
 				if !newScope.Dialect().HasTable(newScope.TableName()) {
-					fmt.Printf("automigrate has_many \n")
 					newScope.autoMigrate()
 				}
 
