@@ -1103,11 +1103,25 @@ func (scope *Scope) autoForeignKeys() {
 		if relationship := field.Relationship; relationship != nil {
 			fmt.Printf("relationship: %+v, field %+v, tag %v \n", field.Relationship, field, field.Tag)
 			if relationship.Kind == "belongs_to" {
-				// TODO ensure that 0 indexes here are good; determine strategy for setting RESTRICT or other foreign key settings here (based on tag, maybe?)
 				newScope := scope.New(reflect.New(field.Struct.Type).Interface())
 				fKeyTable := newScope.TableName()
 				dest := fKeyTable + "(" + relationship.AssociationForeignDBNames[0] + ")"
 				scope.addForeignKey(relationship.ForeignDBNames[0], dest, "RESTRICT", "RESTRICT")
+			}
+
+			if relationship.Kind == "has_one" {
+				newScope := scope.New(reflect.New(field.Struct.Type).Interface())
+				fKeyTable := scope.TableName()
+				dest := fKeyTable + "(" + relationship.AssociationForeignDBNames[0] + ")"
+				newScope.addForeignKey(relationship.ForeignDBNames[0], dest, "RESTRICT", "RESTRICT")
+			}
+
+			if relationship.Kind == "has_many" {
+				model := reflect.New(field.Struct.Type.Elem()).Interface()
+				newScope := scope.New(model)
+				fKeyTable := scope.TableName()
+				dest := fKeyTable + "(" + relationship.AssociationForeignDBNames[0] + ")"
+				newScope.addForeignKey(relationship.ForeignDBNames[0], dest, "RESTRICT", "RESTRICT")
 			}
 		}
 	}
